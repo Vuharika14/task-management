@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<head>
+    <title>Task Management</title>
+ <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: white;
+        margin: 0;
+        padding: 20px;
+      }
+      .image-container {
+        text-align: center;
+        margin: 20px 0;
+      }
+      img {
+        width: 40%;
+        height: 1%;
+        border: 7px solid #ccc;
+        border-radius: 70px;
+      }
+
+      .dark-theme {
+        background-color: #333;
+        color: #fff;
+      }
+      h1 {
+        text-align: center;
+        font-family: "Times New Roman", Times, serif, sans-serif;
+        color: red;
+      }
+      h2 {
+        text-align: center;
+        font-family: "Times New Roman", Times, serif, sans-serif;
+      }
+
+      #task-list {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #task-form,
+      #user-form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+      }
+      #create-task {
+        margin-top: 20px;
+      }
+
+      .progress-circle {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: conic-gradient(
+          #4caf50 0%,
+          #4caf50 var(--progress, 0%),
+          #ddd var(--progress, 0%)
+        );
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+      }
+
+      .progress-circle span {
+        position: absolute;
+        font-size: 24px;
+        color: #333;
+        font-weight: bold;
+      }
+
+      button {
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        padding: 10px 15px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #3e8e41;
+      }
+
+      .mark-complete {
+        background-color: #007bff;
+      }
+
+      .mark-complete:hover {
+        background-color: #0056b3;
+      }
+
+      .edit-task {
+        background-color: #ffc107;
+      }
+
+      .edit-task:hover {
+        background-color: #e0a800;
+      }
+
+      .delete-task {
+        background-color: #dc3545;
+      }
+
+      .delete-task:hover {
+        background-color: #c82333;
+      }
+
+      input[type="text"] {
+        width: 50%;
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      .task-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 50%;
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 5px;
+        margin-left: 20px;
+      }
+
+      .task-name {
+        font-family: "Roboto", sans-serif;
+        font-size: 18px;
+        margin-right: 20px;
+      }
+
+      .completed {
+        text-decoration: line-through;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="theme-toggle">Toggle Theme</button>
+    <h1>Task Management System</h1>
+
+    <div class="image-container">
+      <img
+        src="file:///C:/Users/udayg/OneDrive/Desktop/ATF15-web%20technologies/assignment%202/1.jpg"
+        alt="Description of Image"
+      />
+    </div>
+
+    <h1 id="user-name"></h1>
+
+    <main>
+      <section id="user-form">
+        <input id="user-input" type="text" placeholder="Enter your name" />
+      </section>
+
+      <section id="task-form">
+        <input id="task-input" type="text" placeholder="Enter a new task" />
+        <button id="create-task">Create Task</button>
+      </section>
+
+      <section id="task-list">
+        <h2>Tasks</h2>
+
+        <div>
+          <button id="show-pending">Show Pending</button>
+          <button id="show-completed">Show Completed</button>
+          <button id="show-all">Show All</button>
+          <ul id="task-items"></ul>
+
+         
+          <div class="progress-circle" id="progress-circle">
+            <span id="progress-percentage">0%</span>
+          </div>
+        </div>
+      </section>
+
+     
+    </main>
+
+    <!-- jQuery Library -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- JavaScript Logic -->
+    <script>
+      $(document).ready(function () {
+  const users = JSON.parse(localStorage.getItem("users")) || {};
+  let currentUser = "";
+  let currentFilter = "all";
+
+  function saveToLocalStorage() {
+    localStorage.setItem("users", JSON.stringify(users));
+  }
+
+  function switchUser(userName) {
+    currentUser = userName;
+    if (!users[currentUser]) {
+      users[currentUser] = [];
+    }
+    renderTaskList();
+  }
+
+  $("#create-task").on("click", function () {
+    const taskInput = $("#task-input").val().trim();
+    if (currentUser && taskInput) {
+      users[currentUser].push({ text: taskInput, completed: false });
+      saveToLocalStorage();
+      $("#task-input").val("");
+      renderTaskList();
+    } else {
+      alert("Please enter a valid username and task.");
+    }
+  });
+
+  $("#user-input").on("change", function () {
+    const userName = $(this).val().trim();
+    if (userName) {
+      switchUser(userName);
+      $("#user-name").text(userName); 
+    }
+  });
+
+  function renderTaskList() {
+    $("#task-items").empty();
+
+    const userTasks = users[currentUser] || [];
+
+    const filteredTasks = userTasks.filter((task) =>
+      currentFilter === "all"
+        ? true
+        : currentFilter === "completed"
+        ? task.completed
+        : !task.completed
+    );
+
+    filteredTasks.forEach((task, index) => {
+      const taskElement = $(`<li class="task-item ${
+        task.completed ? "completed" : ""
+      }">
+        <span class="task-name">${task.text}</span>
+        <div class="task-actions">
+            <button class="mark-complete" data-user="${currentUser}" data-index="${index}">${
+        task.completed ? "Undo" : "Complete"
+      }</button>
+            <button class="edit-task" data-user="${currentUser}" data-index="${index}">Edit</button>
+            <button class="delete-task" data-user="${currentUser}" data-index="${index}">Delete</button>
+        </div>
+    </li>`);
+      $("#task-items").append(taskElement);
+    });
+
+    updateProgressCircle();
+  }
+
+  function updateProgressCircle() {
+    const completedTaskCount = (users[currentUser] || []).filter(
+      (task) => task.completed
+    ).length;
+    const totalTaskCount = (users[currentUser] || []).length || 1;
+    const progressPercentage =
+      (completedTaskCount / totalTaskCount) * 100;
+
+    $("#progress-circle").css("--progress", `${progressPercentage}%`);
+    $("#progress-percentage").text(`${Math.round(progressPercentage)}%`);
+  }
+
+  $(document).on("click", ".mark-complete", function () {
+    const user = $(this).data("user");
+    const index = $(this).data("index");
+    users[user][index].completed = !users[user][index].completed;
+    saveToLocalStorage();
+    renderTaskList();
+  });
+
+  $(document).on("click", ".edit-task", function () {
+    const user = $(this).data("user");
+    const index = $(this).data("index");
+    const newText = prompt("Edit your task:", users[user][index].text);
+    if (newText) {
+      users[user][index].text = newText.trim();
+      saveToLocalStorage();
+      renderTaskList();
+    }
+  });
+
+  $(document).on("click", ".delete-task", function () {
+    const user = $(this).data("user");
+    const index = $(this).data("index");
+    users[user].splice(index, 1);
+    saveToLocalStorage();
+    renderTaskList();
+  });
+
+  $("#show-pending").on("click", function () {
+    currentFilter = "pending";
+    renderTaskList();
+  });
+
+  $("#show-completed").on("click", function () {
+    currentFilter = "completed";
+    renderTaskList();
+  });
+
+  $("#show-all").on("click", function () {
+    currentFilter = "all";
+    renderTaskList();
+  });
+
+  $("#theme-toggle").on("click", function () {
+    $("body").toggleClass("dark-theme");
+  });
+});
+
+    </script>
+  </body>
+</html>
